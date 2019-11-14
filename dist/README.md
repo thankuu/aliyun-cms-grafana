@@ -1,250 +1,83 @@
-## Simple JSON Datasource - a generic backend datasource
+# aliyun-cms-grafana数据源使用说明文档
 
-More documentation about datasource plugins can be found in the [Docs](https://github.com/grafana/grafana/blob/master/docs/sources/plugins/developing/datasources.md).
+## 1、安装云监控grafana数据源
+    从阿里云监控官网下载数据源压缩包，将解压后的文件夹放入grafana安装目录下的数据源目录中（${GRAFANA_HOME}\public\app\plugins\datasource），
+    重启grafana即完成安装。
+## 2、配置云监控grafana数据源
+    进入grafana的数据源配置页面(Data Sources)，点击Add data source进入配置表单页面，填入数据源名称（Name），在数据源类型（Type）下拉列表中
+    选择metricstore。然后开始配置Endpoint以及认证信息，Endpoint是所有获取云监控数据的请求地址，根据你所在Endpoint填写，
+    默认为http://metrics.cn-hangzhou.aliyuncs.com，Access key ID和Secret access key填写账号AK，填写完成点击Save & Test，
+    如果显示Success Data source is working，说明数据源配置成功，可以开始在grafana中访问阿里云监控的数据了。
+## 3、使用云监控grafana数据源
+    云监控数据源支持多种grafana原生的数据展示方式，下面主要介绍Graph和Table两种展示方式和Templating功能的使用：
+###（1）、图表（Graph）方式
+    在dashboard上点击ADD ROW时选择Graph，在Panel data source中选择配置的云监控数据源，上方会显示配置表单，下面解释表单中各项的意义：
+    **Metric**：Project/Metric格式的所有云监控预设监控项，详细请访问: https://help.aliyun.com/document_detail/28619.html?spm=5176.doc51936.6.654.zVApOa，
+    必须首先选择Metric，因为其他各项会依赖Metric的选择。
+    **Period**：数据点时间间隔，按照所选metric定义的peroid或者peroid的整数倍填写，默认为空，当Period为空时云监控后台会根据选择的时间
+    范围计算一个最合适的Period。由于每次请求后台只返回1000个数据点，所以建议选择时间段较长的时候保持此项为空，避免图表中出现数据断层。
+    **Values**：统计方法，比如Average 、Minimum 、Maximum等，此项可以下拉选择一项或者多项，已选项会以标签的方式列在右侧，你可以点击
+    标签上的X删除一个已选项。注意：选择此项必须先选择Metric。
+    **Dimensions**：维度，比如instanceId、device等，根据选择的Metric不同会有所不同。Dimensions是有层级关系的，必须先选择上一层级
+    Dimension的值才会显示下一层级Dimension的名称和可选的值，当你点击Dimension的输入框时，会下拉提示设置账号下所属资源的列表。注意：
+    需要先选择Metric才可以配置Dimensions。
+    当你配置完成所有配置项的时候，点击表单空白位置就会在图标中出现数据，当然你修改Period、Values、Dimensions任意一项的时候，都会按照你
+    最新的配置重新获取数据。如果你修改了Metric，若新的Metric和旧的Metric各配置项不匹配的时候会清空所有表单中的配置，因为不同Metric可以
+    配置的项目内容可能不同。
+    **说明**：图表标题默认为配置Metric的名称；图表各线条的命名规则为：Metric_Dimensions_Value，其中Dimensions有几级就显示几级，
+    用"_"分割，这种组合命名方式方便区分不同线条所代表的意义。
+###（2）、表格（Table）方式
+    在dashboard上点击ADD ROW时选择Table，在Panel data source中选择配置的云监控数据源，上方会显示配置表单，下面解释表单中各项的意义：
+    **Metric**：同图表（Graph）方式。
+    **Period**：同图表（Graph）方式。
+    **listByTop**：不勾选表示以表格方式列出时序数据，数据意义同图表（Graph）方式，其实就是图表数据内容表格化，其他各项配置也和
+    图表（Graph）方式一样；勾选表示获取某个账号中所有机器所选Metric的整体统计信息，适用于例如列出本账号下CPU使用率最高的多少台机器这类
+    的场景，勾选此项时Dimensions配置项隐藏，增加Limit、Order By、orderDesc三项。
+    **Values**：同图表（Graph）方式。
+    **Dimensions**：同图表（Graph）方式。
+    **Limit**：列出数据条数，例如上述CPU使用率最高的条数。
+    **Order By**：排序字段。
+    **orderDesc**：是否倒序，不勾选按照Order By的字段从大到小选择前Limit条数据，勾选反之，默认不勾选。
+    当你配置完成所有配置项的时候，点击表单空白位置就会在图标中出现数据，当然你修改Period、Values、Dimensions、Limit、Order By、
+    orderDesc任意一项的时候，都会按照你最新的配置重新获取数据。如果你修改了Metric时，若新的Metric和旧的Metric各配置项不匹配的时候会
+    清空所有表单中的设置，因为不同Metric可以配置的项目内容可能不同。
+     **说明**：勾选listByTop时表格标题默认为配置Metric的名称，表中列为Time、各级Dimensions、选择的Values；不勾选listByTop时表格标
+     题默认为Metric和各级Dimensions的组合，表中列为Time、选择的Values。
+###（3）、Templating功能
+    Templating功能可以方便切换查看不同机器的监控数据而不需要修改配置表单，云监控数据源支持简单的匹配模式提供Templating功能。
+    进入Templating新建页面，填入名称（name）、下拉选择Data source为设置的云监控数据源，在Query里面填写查询格式：dimension_values("${Metric}"),
+    ${Metric}即为配置表单中的Metric，如：acs_ecs_dashboard/CPUUtilization。其中dimension_values()是固定格式，小括号里面是
+    双引号包裹的Metric字符串。当然这种格式也支持级联的格式，可以在下一级的Query语句通过$name引用上一级的Query结果，从左往右逐级
+    引用对应级别的Query name即可，例如针对acs_slb_dashboard/InactiveConnection这个Metric，Dimensions有三级：instanceId、
+    port、vip，那么可以定义以下Query语句查询各个层级的Dimension值：
+    $instanceId：dimension_values("acs_slb_dashboard/InactiveConnection")//列出所有instanceId
+    $port：dimension_values("acs_slb_dashboard/InactiveConnection","$instanceId")//列出所有port
+    $vip：dimension_values("acs_slb_dashboard/InactiveConnection","$instanceId","$port")//列出所有vip
+    **注意**：引用上级别的Query时候name前需要加"$"，并用双引号包裹起来。
+## 4、数据源打包发布方式
+    进入metricstore4grafana\metricstore-datasource 目录下，执行grunt命令（需要安装nodejs和npm），则会按照Gruntfile.js里面的配置
+    将项目里面的文件打包到指定的目录，当前配置是将项目文件打包到dist目录下，发布的时候打包发布dist目录下的文件。
+## 5、FAQ
+   （1）、云监控grafana数据源配置的AK保存在哪里？有没有AK被窃取的风险？
+         数据源配置AK存储在grafana内置的数据库里，不会通过网络传输AK，只要保证安装grafana机器的安全AK就不会被窃取。
 
-This also serves as a living example implementation of a datasource.
-
-Your backend needs to implement 4 urls:
-
- * `/` should return 200 ok. Used for "Test connection" on the datasource config page.
- * `/search` used by the find metric options on the query tab in panels.
- * `/query` should return metrics based on input.
- * `/annotations` should return annotations.
- 
-Those two urls are optional:
-
- * `/tag-keys` should return tag keys for ad hoc filters.
- * `/tag-values` should return tag values for ad hoc filters.
-
-## Installation
-
-To install this plugin using the `grafana-cli` tool:
-```
-sudo grafana-cli plugins install grafana-simple-json-datasource
-sudo service grafana-server restart
-```
-See [here](https://grafana.com/plugins/grafana-simple-json-datasource/installation) for more
-information.
-
-### Example backend implementations
-- https://github.com/bergquist/fake-simple-json-datasource
-- https://github.com/smcquay/jsonds
-- https://github.com/ContextLogic/eventmaster
-- https://gist.github.com/linar-jether/95ff412f9d19fdf5e51293eb0c09b850 (Python/pandas backend)
-
-### Query API
-
-Example `timeserie` request
-``` javascript
-{
-  "panelId": 1,
-  "range": {
-    "from": "2016-10-31T06:33:44.866Z",
-    "to": "2016-10-31T12:33:44.866Z",
-    "raw": {
-      "from": "now-6h",
-      "to": "now"
-    }
-  },
-  "rangeRaw": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "interval": "30s",
-  "intervalMs": 30000,
-  "targets": [
-     { "target": "upper_50", "refId": "A", "type": "timeserie" },
-     { "target": "upper_75", "refId": "B", "type": "timeserie" }
-  ],
-  "adhocFilters": [{
-    "key": "City",
-    "operator": "=",
-    "value": "Berlin"
-  }],
-  "format": "json",
-  "maxDataPoints": 550
-}
-```
-
-Example `timeserie` response
-``` javascript
-[
-  {
-    "target":"upper_75", // The field being queried for
-    "datapoints":[
-      [622,1450754160000],  // Metric value as a float , unixtimestamp in milliseconds
-      [365,1450754220000]
-    ]
-  },
-  {
-    "target":"upper_90",
-    "datapoints":[
-      [861,1450754160000],
-      [767,1450754220000]
-    ]
-  }
-]
-```
-
-If the metric selected is `"type": "table"`, an example `table` response:
-``` json
-[
-  {
-    "columns":[
-      {"text":"Time","type":"time"},
-      {"text":"Country","type":"string"},
-      {"text":"Number","type":"number"}
-    ],
-    "rows":[
-      [1234567,"SE",123],
-      [1234567,"DE",231],
-      [1234567,"US",321]
-    ],
-    "type":"table"
-  }
-]
-```
-
-### Annotation API
-
-The annotation request from the Simple JSON Datasource is a POST request to
-the `/annotations` endpoint in your datasource. The JSON request body looks like this:
-``` javascript
-{
-  "range": {
-    "from": "2016-04-15T13:44:39.070Z",
-    "to": "2016-04-15T14:44:39.070Z"
-  },
-  "rangeRaw": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "annotation": {
-    "name": "deploy",
-    "datasource": "Simple JSON Datasource",
-    "iconColor": "rgba(255, 96, 96, 1)",
-    "enable": true,
-    "query": "#deploy"
-  }
-}
-```
-
-Grafana expects a response containing an array of annotation objects in the
-following format:
-
-``` javascript
-[
-  {
-    annotation: annotation, // The original annotation sent from Grafana.
-    time: time, // Time since UNIX Epoch in milliseconds. (required)
-    title: title, // The title for the annotation tooltip. (required)
-    tags: tags, // Tags for the annotation. (optional)
-    text: text // Text for the annotation. (optional)
-  }
-]
-```
-
-Note: If the datasource is configured to connect directly to the backend, you
-also need to implement an OPTIONS endpoint at `/annotations` that responds
-with the correct CORS headers:
-
-```
-Access-Control-Allow-Headers:accept, content-type
-Access-Control-Allow-Methods:POST
-Access-Control-Allow-Origin:*
-```
-
-### Search API
-
-Example request
-``` javascript
-{ target: 'upper_50' }
-```
-
-The search api can either return an array or map.
-
-Example array response
-``` javascript
-["upper_25","upper_50","upper_75","upper_90","upper_95"]
-```
-
-Example map response
-``` javascript
-[ { "text" :"upper_25", "value": 1}, { "text" :"upper_75", "value": 2} ]
-```
-
-### Tag Keys API
-
-Example request
-``` javascript
-{ }
-```
-
-The tag keys api returns:
-```javascript
-[
-    {"type":"string","text":"City"},
-    {"type":"string","text":"Country"}
-]
-```
-
-### Tag Values API
-
-Example request
-``` javascript
-{"key": "City"}
-```
-
-The tag values api returns:
-```javascript
-[
-    {'text': 'Eins!'},
-    {'text': 'Zwei'},
-    {'text': 'Drei!'}
-]
-```
-
-### Dev setup
-
-This plugin requires node 6.10.0
-
-```
-npm install -g yarn
-yarn install
-npm run build
-```
-
-### Changelog
-
-1.4.0
-
-- Support for adhoc filters:
-  - added tag-keys + tag-values api
-  - added adHocFilters parameter to query body
-
-1.3.5
-- Fix for dropdowns in query editor to allow writing template variables (broke due to change in Grafana).
-
-1.3.4
-- Adds support for With Credentials (sends grafana cookies with request) when using Direct mode
-- Fix for the typeahead component for metrics dropdown (`/search` endpoint).
-
-1.3.3
- - Adds support for basic authentication
-
-1.2.4
- - Add support returning sets in the search endpoint
-
-1.2.3
- - Allow nested templates in find metric query. #23
-
-1.2.2
- - Dont execute hidden queries
- - Template support for metrics queries
- - Template support for annotation queries
-
-### If using Grafana 2.6
-NOTE!
-for grafana 2.6 please use [this version](https://github.com/grafana/simple-json-datasource/commit/b78720f6e00c115203d8f4c0e81ccd3c16001f94)
-
-Copy the data source you want to `/public/app/plugins/datasource/`. Then restart grafana-server. The new data source should now be available in the data source type dropdown in the Add Data Source View.
+   （2）、云监控grafana数据源实现原理是什么样的？
+         云监控数据源通过实现js版本的[签名算法](https://help.aliyun.com/document_detail/28616.html?spm=5176.doc28618.6.639.5rgcw8)，
+         用配置的AK生成签名拼接URL请求阿里云网关的open api获取数据，这种方式安装配置简单，不需要部署其他额外的服务即可使用。
+## 6、20181120更新内容：
+    1.Project项目：动态从QueryProjectMeta接口获取，且设置一个默认值为acs_ecs_dashboard;
+    2.Metric监控项：根据已选择的Project动态从QueryMetricMeta接口获取(默认150，不足可输入)，默认为空；
+    3.Period时间间隔：根据已选择的Metric监控项动态从QueryMetricMeta接口获取，且支持输入联想框、手动输入；
+    4.Group分组：根据ListMyGroups接口动态获取该Ak信息下的所有分组；
+    5.Dimensions实力维度：若选择Group分组后，根据ListMyGroupInstances接口动态获取该分组下的所有实例信息，且支持输入联想、多选、去除重复已选项；
+                若不选择Group分组，择根据QueryMetricLast接口动态获取该AK下的所有实例信息，且支持输入联想、多选、去除已选项；
+    6.Y - column目标源：根据已选择的Metric监控项动态从QueryMetricMeta接口获取，且支持输入联想框、手动输入、多选;是否需要、去除已选项。
+## 7、20181229更新内容：
+    Project可选择自定义监控；
+    Metric无接口可查询自定义监控的Metric信息；
+    Group可查看groupName / groupId；在自定义监控下，group必选；在其他情况下，group可选；
+    Dimensions分二大种情况：
+        一.自定义监控、日志监控类：此情况下，Dimensions不做任何提示，原因是QueryCustomMetricList接口无法根据GroupId和MetricName获取维度信息，必须传入Dimension才可获取；
+        二.正常监控，选Group，获取该分组下的前1000条实例信息；不选Group获取QueryMetricLast查询下的前1000条数据解析后去重实例信息。
+    页面参数全部增加提示信息。
+    最新操作文档地址 https://yuque.antfin-inc.com/docs/share/1a44e5b4-cd3f-47a4-b670-4e6ef18c3e23
