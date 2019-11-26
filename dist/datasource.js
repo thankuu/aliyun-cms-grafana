@@ -121,6 +121,11 @@ System.register(["lodash", "./signer.js"], function (_export, _context) {
                       //判断是否使用了变量
                       if (dimensionJson[i][0] === '$') {
                         dimensionArray.push({ "instanceId": _this.templateSrv.replace(dimensionJson[i]) });
+                      } else if (dimensionJson[i][0] === '#') {
+                        var strArray = dimensionJson[i].split('|');
+                        var key = strArray[0].substring(1);
+                        var value = strArray[1];
+                        dimensionArray.push({ key: value });
                       } else {
                         dimensionArray.push({ "instanceId": dimensionJson[i] });
                       }

@@ -10,7 +10,7 @@
     如果显示Success Data source is working，说明数据源配置成功，可以开始在grafana中访问阿里云监控的数据了。
 ## 3、使用云监控grafana数据源
     云监控数据源支持多种grafana原生的数据展示方式，下面主要介绍Graph和Table两种展示方式和Templating功能的使用：
-###（1）、图表（Graph）方式
+### （1）、图表（Graph）方式
     在dashboard上点击ADD ROW时选择Graph，在Panel data source中选择配置的云监控数据源，上方会显示配置表单，下面解释表单中各项的意义：
     **Metric**：Project/Metric格式的所有云监控预设监控项，详细请访问: https://help.aliyun.com/document_detail/28619.html?spm=5176.doc51936.6.654.zVApOa，
     必须首先选择Metric，因为其他各项会依赖Metric的选择。
@@ -26,7 +26,7 @@
     配置的项目内容可能不同。
     **说明**：图表标题默认为配置Metric的名称；图表各线条的命名规则为：Metric_Dimensions_Value，其中Dimensions有几级就显示几级，
     用"_"分割，这种组合命名方式方便区分不同线条所代表的意义。
-###（2）、表格（Table）方式
+### （2）、表格（Table）方式
     在dashboard上点击ADD ROW时选择Table，在Panel data source中选择配置的云监控数据源，上方会显示配置表单，下面解释表单中各项的意义：
     **Metric**：同图表（Graph）方式。
     **Period**：同图表（Graph）方式。
@@ -43,7 +43,7 @@
     清空所有表单中的设置，因为不同Metric可以配置的项目内容可能不同。
      **说明**：勾选listByTop时表格标题默认为配置Metric的名称，表中列为Time、各级Dimensions、选择的Values；不勾选listByTop时表格标
      题默认为Metric和各级Dimensions的组合，表中列为Time、选择的Values。
-###（3）、Templating功能
+### （3）、Templating功能
     Templating功能可以方便切换查看不同机器的监控数据而不需要修改配置表单，云监控数据源支持简单的匹配模式提供Templating功能。
     进入Templating新建页面，填入名称（name）、下拉选择Data source为设置的云监控数据源，在Query里面填写查询格式：dimension_values("${Metric}"),
     ${Metric}即为配置表单中的Metric，如：acs_ecs_dashboard/CPUUtilization。其中dimension_values()是固定格式，小括号里面是
