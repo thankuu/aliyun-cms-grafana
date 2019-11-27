@@ -122,10 +122,12 @@ System.register(["lodash", "./signer.js"], function (_export, _context) {
                       if (dimensionJson[i][0] === '$') {
                         dimensionArray.push({ "instanceId": _this.templateSrv.replace(dimensionJson[i]) });
                       } else if (dimensionJson[i][0] === '#') {
-                        var strArray = dimensionJson[i].split('|');
-                        var key = strArray[0].substring(1);
-                        var value = strArray[1];
-                        dimensionArray.push({ key: value });
+                        var strArray = dimensionJson[i].substring(1).split('|');
+                        var finallyData = {};
+                        for (var j = 0; j < strArray.length; j = j + 2) {
+                          finallyData[strArray[j]] = strArray[j + 1];
+                        }
+                        dimensionArray.push(finallyData);
                       } else {
                         dimensionArray.push({ "instanceId": dimensionJson[i] });
                       }
